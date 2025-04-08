@@ -380,7 +380,15 @@ export class TilesRenderer extends TilesRendererBase {
 			if ( plugin.doTilesNeedUpdate ) {
 
 				const res = plugin.doTilesNeedUpdate();
-				needsUpdate = needsUpdate === null ? res : needsUpdate || res;
+				if ( needsUpdate === null ) {
+
+					needsUpdate = res;
+
+				} else {
+
+					needsUpdate = Boolean( needsUpdate || res );
+
+				}
 
 			}
 
@@ -655,6 +663,9 @@ export class TilesRenderer extends TilesRendererBase {
 				}
 
 				promise = loader.parseAsync( buffer, resourcePath ).then( result => {
+
+					// glTF files are not guaranteed to include a scene object
+					result.scene = result.scene || new Group();
 
 					// apply the local up-axis correction rotation
 					// GLTFLoader seems to never set a transformation on the root scene object so

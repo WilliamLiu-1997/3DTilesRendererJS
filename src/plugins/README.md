@@ -352,7 +352,7 @@ This plugin changes below values to be more efficient for the photorealistic til
 ```js
 tiles.parseQueue.maxJobs = 10;
 tiles.downloadQueue.maxJobs = 30;
-tiles.errorTarget = 40;
+tiles.errorTarget = 20;
 ```
 
 ## CesiumIonAuthPlugin
@@ -657,6 +657,34 @@ Available options are as follows:
 }
 ```
 
+## QuantizedMeshPlugin
+
+Plugin for adding support to load and display [quantized mesh](https://github.com/CesiumGS/quantized-mesh) tile sets.
+
+### .constructor
+
+```js
+constructor( options : Object )
+```
+
+Available options are as follows:
+
+```js
+{
+	// If true then the TilesRenderer error target is set to 2 so an expected amount of tile detail is rendered.
+	useRecommendedSettings: true,
+
+	// The length of the skirts to generate for each tile. No skirts are generated if set to 0.
+	skirtLength: 1000,
+
+	// If true then the normals on the edge of the tile are replicated on skirt vertices. Otherwise the skits have flat edges.
+	smoothSkirtNormals: true,
+
+	// Whether to generate the tiles as a solid form with bottom faces.
+	solid: false,
+}
+```
+
 ## LoadRegionPlugin
 
 Plugin to enhances the TilesRenderer by enabling selective loading of tiles based on regions or volumes up to a specified geometric error target. Regions take shapes in the local tile set coordinate frame:
@@ -728,6 +756,9 @@ Remove all regions.
 
 A plugin that takes a shape as a mesh and direction along which to "flatten" vertices to the surface of the shape. Useful for shifting tile geometry to make room for new assets. Not compatible with other plugins that modify geometry such as `BatchedTilesPlugin`.
 
+> [!NOTE]
+> All shapes and directions must be specified in the local coordinate from the tile set.
+
 ### hasShape
 
 ```js
@@ -739,10 +770,10 @@ Returns whether the given object has been passed in as a shape.
 ### addShape
 
 ```js
-addShape( shape: Object3D, direction: Vector3 ): void
+addShape( shape: Object3D, direction: Vector3 = ( 0, - 1, 0 ), threshold: number = Infinity ): void
 ```
 
-Adds the given object as a shape to flatten to in addition to the direction to flatten.
+Adds the given object as a shape to flatten to in addition to the direction to flatten. The `threshold` field is the distance threshold under which vertices will be flattened. `Infinity` will always flatten while `0` will never flatten.
 
 ### updateShape
 

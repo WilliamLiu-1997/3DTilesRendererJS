@@ -1,5 +1,5 @@
 import { Box3, Sphere, Matrix4 } from 'three';
-import { Ellipsoid } from './Ellipsoid';
+import { Ellipsoid } from './Ellipsoid.js';
 
 export class EllipsoidRegion extends Ellipsoid {
 
@@ -17,7 +17,7 @@ export class EllipsoidRegion extends Ellipsoid {
 		heightStart: number, heightEnd: number
 	);
 
-	getBoundingBox( box : Box3, matrix : Matrix4 );
-	getBoundingSphere( sphere : Sphere );
+	getBoundingBox( box : Box3, matrix : Matrix4 ): void;
+	getBoundingSphere( sphere : Sphere ): void;
 
 }

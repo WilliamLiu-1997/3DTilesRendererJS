@@ -4,8 +4,9 @@
             "dom",
             "es2015"
         ],
-        "moduleResolution": "node",
-        "types": []
+        "module": "node16",
+        "types": [],
+        "strict": true
     },
     "files": [
         "src/index.d.ts",

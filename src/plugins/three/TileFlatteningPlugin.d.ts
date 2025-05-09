@@ -1,11 +1,11 @@
-import { Mesh } from 'three';
+import { Mesh, Vector3 } from 'three';
 
-export class TileFatteningPlugin {
+export class TileFlatteningPlugin {
 
 	hasShape( mesh: Mesh ): boolean;
-	addShape( mesh: Mesh, direction: Vector3 ): void;
+	addShape( mesh: Mesh, direction: Vector3, threshold: number ): void;
 	updateShape( mesh: Mesh ): void;
-	deleteShape( mesh ): boolean;
+	deleteShape( mesh: Mesh ): boolean;
 	clearShapes(): void;
 
 }

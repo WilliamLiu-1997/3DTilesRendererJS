@@ -12,10 +12,13 @@ let tiles, camera;
 
 const params = {
 
-	errorTarget: window.devicePixelRatio,
+	errorTarget: 1,
 	planar: false,
 
 };
+
+// throttled render function
+const scheduleRender = throttle( render );
 
 init();
 render();
@@ -122,6 +125,14 @@ function initTiles() {
 
 	}
 
+	// listen to events to call render() on change
+	controls.addEventListener( 'change', scheduleRender );
+	controls.addEventListener( 'end', scheduleRender );
+	tiles.addEventListener( 'needs-render', scheduleRender );
+	tiles.addEventListener( 'needs-update', scheduleRender );
+
+	render();
+
 }
 
 function onWindowResize() {
@@ -132,11 +143,11 @@ function onWindowResize() {
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
 
+	scheduleRender();
+
 }
 
 function render() {
-
-	requestAnimationFrame( render );
 
 	controls.update();
 	camera.updateMatrixWorld();
@@ -147,5 +158,26 @@ function render() {
 	tiles.update();
 
 	renderer.render( scene, camera );
+
+}
+
+function throttle( callback ) {
+
+	let scheduled = false;
+	return () => {
+
+		if ( ! scheduled ) {
+
+			scheduled = true;
+			requestAnimationFrame( () => {
+
+				scheduled = false;
+				callback();
+
+			} );
+
+		}
+
+	};
 
 }

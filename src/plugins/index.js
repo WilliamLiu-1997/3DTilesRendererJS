@@ -8,12 +8,13 @@ export { ReorientationPlugin } from './three/ReorientationPlugin.js';
 export { UnloadTilesPlugin } from './three/UnloadTilesPlugin.js';
 export { TilesFadePlugin } from './three/fade/TilesFadePlugin.js';
 export { BatchedTilesPlugin } from './three/batched/BatchedTilesPlugin.js';
+export { TileFlatteningPlugin } from './three/TileFlatteningPlugin.js';
 export * from './three/LoadRegionPlugin.js';
 export * from './three/DebugTilesPlugin.js';
 
 // other formats
-export * from './three/images/ImageFormatPlugin.js';
-export * from './three/images/EllipsoidProjectionTilesPlugin.js';
+export * from './three/images/DeepZoomImagePlugin.js';
+export * from './three/images/EPSGTilesPlugin.js';
 
 // common plugins
 export { ImplicitTilingPlugin } from './base/ImplicitTilingPlugin.js';

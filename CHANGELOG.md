@@ -4,10 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.4.9] - Unreleased
+## [0.4.9] - 2025.05.07
 ### Fixed
 - Structural Metadata: Fixed case where accessor properties do not match the class definition.
 - Fix type definitions for LRUCache.
+- Implicit Subtree files being loaded with incorrect headers.
+- Ambiguous typing.
+- Correctly export `TilesFlatteningPlugin`.
+- Types: Added file extensions to enable support for older node versions.
+- TilesRenderer: Removed implicit use of "devicePixelRatio" when setting camera resolution to ensure more consistent error target calculations across devices.
+- EnvironmentControls: Adjust event listeners to exit early if controls are disabled.
+- R3F TilesRenderer Component: Fixed case where tiles would not load when using on demand rendering without moving the camera (via needs-update event).
+
+### Added
+- QuantizedMeshPlugin: A plugin for loading quantized mesh files.
+- TilesFlatteningPlugin: Added a threshold option to `addShape`.
+- TilesRenderer: Added "needs-update" event.
+- R3F TilesPlugin: Added support for deep field property assignment.
+
+### Changed
+- Internal "force-rerender" function renamed to "needs-render".
+- TilesRenderer: Move check for cameras after update traversal to enable loading the root tile set file without a camera defined.
 
 ## [0.4.8] - 2025.04.07
 ### Fixed

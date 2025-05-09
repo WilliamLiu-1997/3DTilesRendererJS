@@ -3,6 +3,7 @@ import { LRUCache } from '../utilities/LRUCache.js';
 import { PriorityQueue } from '../utilities/PriorityQueue.js';
 import { markUsedTiles, toggleTiles, markVisibleTiles, markUsedSetLeaves, traverseSet } from './traverseFunctions.js';
 import { UNLOADED, LOADING, PARSING, LOADED, FAILED } from './constants.js';
+import { throttle } from '../utilities/throttle.js';
 
 const PLUGIN_REGISTERED = Symbol( 'PLUGIN_REGISTERED' );
 
@@ -89,9 +90,9 @@ export class TilesRendererBase {
 
 	get loadProgress() {
 
-		const stats = this.stats;
+		const { stats, isLoading } = this;
 		const loading = stats.downloading + stats.parsing;
-		const total = stats.inCacheSinceLoad;
+		const total = stats.inCacheSinceLoad + ( isLoading ? 1 : 0 );
 		return total === 0 ? 1.0 : 1.0 - loading / total;
 
 	}
@@ -119,6 +120,7 @@ export class TilesRendererBase {
 		this.plugins = [];
 		this.queuedTiles = [];
 		this.cachedSinceLoadComplete = new Set();
+		this.isLoading = false;
 
 		const lruCache = new LRUCache();
 		lruCache.unloadPriorityCallback = lruPriorityCallback;
@@ -156,8 +158,15 @@ export class TilesRendererBase {
 		};
 		this.frameCount = 0;
 
+		// callbacks
+		this._dispatchNeedsUpdateEvent = throttle( () => {
+
+			this.dispatchEvent( { type: 'needs-update' } );
+
+		} );
+
 		// options
-		this.errorTarget = 6.0;
+		this.errorTarget = 16.0;
 		this._errorThreshold = Infinity;
 		this.displayActiveTiles = false;
 		this.maxDepth = Infinity;
@@ -274,7 +283,7 @@ export class TilesRendererBase {
 	// Public API
 	update() {
 
-		const { lruCache, usedSet, stats, root } = this;
+		const { lruCache, usedSet, stats, root, downloadQueue, parseQueue, processNodeQueue } = this;
 		if ( this.rootLoadingState === UNLOADED ) {
 
 			this.rootLoadingState = LOADING;
@@ -283,6 +292,7 @@ export class TilesRendererBase {
 
 					this.rootLoadingState = LOADED;
 					this.rootTileSet = root;
+					this.dispatchEvent( { type: 'needs-update' } );
 					this.dispatchEvent( { type: 'load-content' } );
 					this.dispatchEvent( {
 						type: 'load-tile-set',
@@ -341,6 +351,18 @@ export class TilesRendererBase {
 
 		// start the downloads
 		lruCache.scheduleUnload();
+
+		// if all tasks have finished and we've been marked as actively loading then fire the completion event
+		const runningTasks = downloadQueue.running || parseQueue.running || processNodeQueue.running;
+		if ( runningTasks === false && this.isLoading === true ) {
+
+			this.cachedSinceLoadComplete.clear();
+			stats.inCacheSinceLoad = 0;
+
+			this.dispatchEvent( { type: 'tiles-load-end' } );
+			this.isLoading = false;
+
+		}
 
 	}
 
@@ -600,6 +622,7 @@ export class TilesRendererBase {
 					this.processNodeQueue.add( child, child => {
 
 						this.preprocessNode( child, tile.__basePath, tile );
+						this._dispatchNeedsUpdateEvent();
 
 					} );
 
@@ -627,8 +650,8 @@ export class TilesRendererBase {
 
 		}
 
-		// remove trailing slash and last path-segment from the URL
-		let basePath = url.replace( /\/[^/]*\/?$/, '' );
+		// remove the last file path path-segment from the URL including the trailing slash
+		let basePath = url.replace( /\/[^/]*$/, '' );
 		basePath = new URL( basePath, window.location.href ).toString();
 		this.preprocessNode( json.root, basePath, parent );
 
@@ -745,8 +768,9 @@ export class TilesRendererBase {
 		}
 
 		// check if this is the beginning of a new set of tiles to load and dispatch and event
-		if ( stats.parsing === 0 && stats.downloading === 0 ) {
+		if ( ! this.isLoading ) {
 
+			this.isLoading = true;
 			this.dispatchEvent( { type: 'tiles-load-start' } );
 
 		}
@@ -858,7 +882,9 @@ export class TilesRendererBase {
 
 				}
 
-				// dispatch an event indicating that this model has completed
+				// dispatch an event indicating that this model has completed and that a new
+				// call to "update" is needed.
+				this.dispatchEvent( { type: 'needs-update' } );
 				this.dispatchEvent( { type: 'load-content' } );
 				if ( tile.cached.scene ) {
 
@@ -912,18 +938,6 @@ export class TilesRendererBase {
 				} else {
 
 					lruCache.remove( tile );
-
-				}
-
-			} )
-			.finally( () => {
-
-				if ( stats.parsing === 0 && stats.downloading === 0 ) {
-
-					this.cachedSinceLoadComplete.clear();
-					stats.inCacheSinceLoad = 0;
-
-					this.dispatchEvent( { type: 'tiles-load-end' } );
 
 				}
 

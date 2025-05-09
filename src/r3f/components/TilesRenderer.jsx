@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, forwardRef, useMemo, useC
 import { useThree, useFrame } from '@react-three/fiber';
 import { Object3D } from 'three';
 import { TilesRenderer as TilesRendererImpl } from '../../three/TilesRenderer.js';
-import { useDeepOptions, useShallowOptions } from '../utilities/useOptions.js';
+import { useDeepOptions } from '../utilities/useOptions.js';
 import { useObjectDep } from '../utilities/useObjectDep.js';
 import { useApplyRefs } from '../utilities/useApplyRefs.js';
 import { WGS84_ELLIPSOID } from '../../three/math/GeoConstants.js';
@@ -172,7 +172,7 @@ export const TilesPlugin = forwardRef( function TilesPlugin( props, ref ) {
 	}, [ tiles, plugin, useObjectDep( args ) ] ); // eslint-disable-line
 
 	// assigns any provided options to the plugin
-	useShallowOptions( instance, options );
+	useDeepOptions( instance, options );
 
 	// assign ref
 	useApplyRefs( instance, ref );
@@ -212,9 +212,8 @@ export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 	// create the tile set
 	useEffect( () => {
 
-		tiles.addEventListener( 'load-tile-set', () => invalidate() );
-		tiles.addEventListener( 'load-content', () => invalidate() );
-		tiles.addEventListener( 'force-rerender', () => invalidate() );
+		tiles.addEventListener( 'needs-render', () => invalidate() );
+		tiles.addEventListener( 'needs-update', () => invalidate() );
 		return () => {
 
 			tiles.dispose();

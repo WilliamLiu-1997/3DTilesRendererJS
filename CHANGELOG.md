@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.4.12] - Unreleased
+### Fixed
+- R3F TilesAttributionOverlay not functioning on non-HTTPS domains.
+
+## [0.4.11] - 2025.07.01
+### Added
+- Add "ImageOverlayPlugin".
+- DebugTilesRenderer: Added "unlit" option.
+- GoogleCloudAuthPlugin: Added support for creating a session that supports loading 2d map tiles.
+- Ellipsoid: Added "getOrientedEastNorthUpFrame", "getObjectFrame", "getCartographicFromObjectFrame" functions.
+- ReorientationPlugin: Add suppor for setting azimuth, elevation, roll
+
+### Fixed
+- TilesRendererBase: Fixed plugins not being disposed of correctly.
+- GoogleCloudAuthPlugin: Throw an error when the tile root fails to load.
+- Fixed some type definitions.
+- GlobeControls: Adjust the perspective camera.far calculation to better limit loaded tiles.
+- DebugTilesPlugin: Fix case where the plugin could not be disabled before registration.
+- Fix case where properties would fail to add if they looked like events with an "on" prefix.
+- Simplify the TileFlatteningPlugin implementation.
+- ReorientationPlugin: Fix plugin disposal not removing an event correctly.
+- ReorientationPlugin: Fix plugin not working if added after TilesRenderer initialization.
+- TopoLinesPlugin: Ensure the plugin can be added after TilesRenderer initialization.
+- TopoLinesPlugin, TilesFadePlugin, ImageOverlayPlugin: Ensure plugins are resilient to being removed and added again.
+- R3F: Fixed case where plugins may not have been able to register before the first call to TilesRenderer.update.
+
+### Changed
+- Ellipsoid: Deprecated "getAzElRollFromRotationMatrix", "getRotationMatrixFromAzElRoll", "getFrame" functions.
+- GlobeControls, EnvironmentControls: Deprecate "setTilesRenderer" function in favor of "setScene" and "setEllipsoid" functions.
+- R3F GlobeControls, EnvironmentControls: Add "ellipsoid" and "ellipsoidGroup" properties.
+
+## [0.4.10] - 2025.05.31
+### Fixed
+- Fixed calls to `updateWorldMatrix` causing the matrixWorldInverse field to become out of sync.
+- Loader type definitions now extend "LoaderBase".
+- Export QuantizedMeshPlugin from plugins.
+- Moved "optionalDependencies" to "peerDependencies" with an optional flag to avoid quirks with the optional dependencies field.
+- Make QuantizedMeshPlugin more robust to missing fields in layer.json.
+- TileFlatteningPlugin: Fixed disposal throwing an error.
+- Change `load-error` event field from `uri` to `url` as documented.
+- Fixed type definitions for some events.
+- B3DM, I3DM, PNTS Loaders: Fixed case where RTC_CENTER feature would not be parsed correctly.
+- Re-add "load-tile-set" event when child tile sets are loaded.
+- Re-add url to "load-tile-set" event.
+- TMSTilesPlugin: Add support for limited bounds.
+
+### Added
+- Ability to resolve to any file in "./src".
+- QuantizedMeshPlugin: Add support for attributions.
+- QuantizedMeshPlugin: Add support for "metadataAvailability".
+- QuantizedMeshPlugin: Add support for auto-filling child tiles from parent data when not present.
+- QuantizedMeshPlugin: Add support for auto-calculating skirth length.
+
+### Changed
+- QuantizedMeshPlugin, Image Plugins: Remove internal, custom queue for generating children in favor of TilesRenderer's new process queue.
+
 ## [0.4.9] - 2025.05.07
 ### Fixed
 - Structural Metadata: Fixed case where accessor properties do not match the class definition.

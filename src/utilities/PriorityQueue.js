@@ -56,17 +56,23 @@ class PriorityQueue {
 
 	add( item, callback ) {
 
-		return new Promise( ( resolve, reject ) => {
+		const data = {
+			callback,
+			reject: null,
+			resolve: null,
+			promise: null,
+		};
+
+		data.promise = new Promise( ( resolve, reject ) => {
 
 			const items = this.items;
 			const callbacks = this.callbacks;
 
+			data.resolve = resolve;
+			data.reject = reject;
+
 			items.push( item );
-			callbacks.set( item, {
-				callback,
-				resolve,
-				reject,
-			} );
+			callbacks.set( item, data );
 
 			if ( this.autoUpdate ) {
 
@@ -75,6 +81,8 @@ class PriorityQueue {
 			}
 
 		} );
+
+		return data.promise;
 
 	}
 
@@ -86,8 +94,31 @@ class PriorityQueue {
 		const index = items.indexOf( item );
 		if ( index !== - 1 ) {
 
+			// reject the promise to ensure there are no dangling promises - add a
+			// catch here to handle the case where the promise was never used anywhere
+			// else.
+			const info = callbacks.get( item );
+			info.promise.catch( () => {} );
+			info.reject( new Error( 'PriorityQueue: Item removed.' ) );
+
 			items.splice( index, 1 );
 			callbacks.delete( item );
+
+		}
+
+	}
+
+	removeByFilter( filter ) {
+
+		const { items } = this;
+		for ( let i = 0; i < items.length; i ++ ) {
+
+			const item = items[ i ];
+			if ( filter( item ) ) {
+
+				this.remove( item );
+
+			}
 
 		}
 

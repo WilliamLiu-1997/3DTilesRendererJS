@@ -2,6 +2,8 @@
 
 import { Color, Matrix4, Vector2, Vector3 } from 'three';
 
+const TOPO_PARAMS = Symbol( 'TOPO_PARAMS' );
+
 const ELLIPSOID_FUNC = /* glsl */`
 
 	vec3 getPositionToSurfacePoint( vec3 radius, vec3 pos ) {
@@ -112,6 +114,13 @@ const MATH_FUNC = /* glsl */`
 // before compile can be used to chain shader adjustments. Returns the added uniforms used for fading.
 export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 
+	// if the material has already been wrapped then return the params
+	if ( material[ TOPO_PARAMS ] ) {
+
+		return material[ TOPO_PARAMS ];
+
+	}
+
 	const params = {
 		resolution: { value: new Vector2() },
 		pixelRatio: { value: 1 },
@@ -132,10 +141,12 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 		thickness: { value: 1.0 },
 	};
 
+	material[ TOPO_PARAMS ] = params;
+
 	material.defines = {
 		...( material.defines || {} ),
 		USE_TOPO_ELLIPSOID: 0,
-		USE_TOPO_LINES: 1,
+		USE_TOPO_LINES: 0,
 	};
 
 	material.onBeforeCompile = shader => {
@@ -239,7 +250,6 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 					lineIndex = step( lineIndex, topoStep * 0.5 );
 
 					// calculate the topography lines
-					// TODO: validate that these thresholds are being used correctly
 					vec3 topoThickness = vec3(
 						lineIndex.x == 0.0 ? thickness[ 0 ] : thickness[ 1 ],
 						lineIndex.y == 0.0 ? thickness[ 0 ] : thickness[ 1 ],
@@ -249,6 +259,7 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 					vec3 topo = smoothstep( delta * 0.5, delta * - 0.5, stride - delta * topoThickness );
 
 					// handle steep surfaces that cover multiple bands
+					// TODO: handle this calculation so it better reflects the tint of multiple lines converging for the given stride
 					vec3 subPixelColor = delta / topoStep;
 					vec3 subPixelAlpha = smoothstep( 0.4 * topoStep, 0.5 * topoStep, delta );
 					vec3 fadedTopo = mix( topo, topoStep / delta * 0.2, subPixelAlpha );
@@ -303,6 +314,7 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 						pos.y = asin( surfaceNormal.z );
 						pos.z = vCartographic.w;
 
+						// TODO: why is multiplying by 1000 needed here?
 						pos.xy *= 180.0 / PI;
 						pos.x += 180.0;
 						pos.xy *= 1000.0;
@@ -333,12 +345,11 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 						// lies on the quadrant axes
 						if ( step0.x > 1e4 ) {
 
-							thickness0 = vec2( 2.0 );
-							step0.x = 90.0 * 1000.0;
+							emphasisStride0.x = 3.0;
+							step0.x = 30.0 * 1000.0;
+							step0.y = 30.0 * 1000.0;
 
-						}
-
-						if ( step0.x > 1e3 ) {
+						} else if ( step0.x > 1e3 ) {
 
 							emphasisStride0.x = 9.0;
 
@@ -346,12 +357,12 @@ export function wrapTopoLineMaterial( material, previousOnBeforeCompile ) {
 
 						if ( step1.x > 1e4 ) {
 
-							thickness1 = vec2( 2.0 );
-							step1.x = 90.0 * 1000.0;
+							emphasisStride1.x = 3.0;
+							step1.y = 30.0 * 1000.0;
+							step1.x = 30.0 * 1000.0;
 
-						}
 
-						if ( step1.x > 1e3 ) {
+						} else if ( step1.x > 1e3 ) {
 
 							emphasisStride1.x = 9.0;
 

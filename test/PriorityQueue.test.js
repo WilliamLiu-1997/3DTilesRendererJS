@@ -196,4 +196,48 @@ describe( 'PriorityQueue', () => {
 
 	} );
 
+	it( 'should reject any promises when removing an item.', async () => {
+
+		const queue = new PriorityQueue();
+		queue.priorityCallback = () => 0;
+		queue.autoUpdate = false;
+		queue.maxJobs = 1;
+
+		let thrown = false;
+		const key = {};
+		const promise = queue
+			.add( key, () => {} )
+			.catch( () => thrown = true );
+
+		queue.remove( key );
+
+		await promise;
+
+		expect( thrown ).toEqual( true );
+
+	} );
+
+	it( 'should be able to filter items and dispose this removed.', async () => {
+
+		const queue = new PriorityQueue();
+		queue.priorityCallback = () => 0;
+		queue.autoUpdate = false;
+		queue.maxJobs = 1;
+
+		queue.add( 1, () => {} );
+		queue.add( 2, () => {} );
+
+		let thrown;
+		const promise = queue.add( 3, () => {} ).catch( () => thrown = true );
+
+		expect( queue.items ).toHaveLength( 3 );
+		queue.removeByFilter( i => i === 3 );
+		expect( queue.items ).toHaveLength( 2 );
+
+		await promise;
+
+		expect( thrown ).toEqual( true );
+
+	} );
+
 } );

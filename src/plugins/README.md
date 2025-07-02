@@ -674,8 +674,9 @@ Available options are as follows:
 	// If true then the TilesRenderer error target is set to 2 so an expected amount of tile detail is rendered.
 	useRecommendedSettings: true,
 
-	// The length of the skirts to generate for each tile. No skirts are generated if set to 0.
-	skirtLength: 1000,
+	// The length of the skirts to generate for each tile. No skirts are generated if set to "0". Skirt length is automtically
+	// calculated from geometric error if set to "null".
+	skirtLength: null,
 
 	// If true then the normals on the edge of the tile are replicated on skirt vertices. Otherwise the skits have flat edges.
 	smoothSkirtNormals: true,
@@ -752,6 +753,105 @@ clearRegions(): void
 
 Remove all regions.
 
+## ImageOverlayPlugin
+
+A plugin that allows for overlaying tiled image formats on top of data sets using either ellipsoidal or planar projection.
+
+### constructor
+
+```js
+constructor( options )
+```
+
+Constructor takes the following options:
+
+```js
+{
+	// The WebGLRenderer instanced being used to render the tile set. Used for constructing and
+	// rendering to render targets.
+	renderer: WebGLRenderer,
+
+	// The series of overlays to initialize the plugin with.
+	overlays = []: Array<ImageOverlay>,
+
+	// The resolution of each render target to use for each overlay.
+	resolution = 256: null,
+}
+```
+
+### addOverlay
+
+```js
+addOverlay( overlay: ImageOverlay, order?: number ): void
+```
+
+Adds an overlay to the plugin. The "order" argument is used to determine the draw order of the overlays.
+
+### setOverlayOrder
+
+```js
+setOverlayOrder( overlay: ImageOverlay, order?: number ): void
+```
+
+Updates the sort order for the given overlay.
+
+### deleteOverlay
+
+```js
+deleteOverlay( overlay: ImageOverlay ): void
+```
+
+Removes the given overlay.
+
+## ImageOverlay
+
+Base class for series of classes used to load and overlay tiled images on tile sets.
+
+See the ["ImageOverlayPlugin" types file](./three/images/ImageOverlayPlugin.d.ts) for list of overlay classes and options.
+
+### color
+
+```js
+color: THREE.Color
+```
+
+The color of the image overlay.
+
+### opacity
+
+```js
+opacity = 1: number
+```
+
+The opacity of the image overlay.
+
+### frame
+
+```js
+frame = null: Matrix4 | null
+```
+The frame to use for projecting the image as a planar-projected overlay. If "null" then
+ellipsoidal projection is used. The frame origin represents the bottom left of the
+overlay. Z is up. Frame is specified in the local frame of the tile set.
+
+Overlay position will update as frame is adjusted.
+
+### constructor
+
+```js
+constructor( options )
+```
+
+Takes the following options:
+
+```js
+{
+	color?: THREE.Color,
+	opacity?: number,
+	frame?: Matrix4 | null,
+}
+```
+
 ## TileFlatteningPlugin
 
 A plugin that takes a shape as a mesh and direction along which to "flatten" vertices to the surface of the shape. Useful for shifting tile geometry to make room for new assets. Not compatible with other plugins that modify geometry such as `BatchedTilesPlugin`.
@@ -798,3 +898,41 @@ clearShapes(): void
 ```
 
 Deletes all shapes and resets the tiles.
+
+## TopoLinesPlugin
+
+_available in the examples directory_
+
+Plugin for rendering topographic contour lines on the tile set.
+
+### .constructor
+
+```js
+constructor( options : Object )
+```
+
+Available options are as follows:
+
+```js
+{
+	// whether the data set is 'planar' or 'ellipsoid'
+	projection = 'planar',
+
+	// the thickness of the topo lines
+	thickness = 1,
+
+	// options for topographic lines
+	// "topoLimit" refers to the min and max distances between each topo line
+	// "topoFadeLimit" refers to the fade in and out point of the topo lines as a whole
+	topoColor = new Color( 0xffffff ),
+	topoOpacity = 0.5,
+	topoLimit = isPlanar ? new Vector2( 0.1, 1e10 ) : new Vector2( 1, 1e10 ),
+	topoFadeLimit = isPlanar ? new Vector2( 0, 1e10 ) : new Vector2( 0, 1e4 ),
+
+	// options for cartesian and cartographic lines when in planar and ellipsoid mode respectively
+	cartoColor = new Color( 0xffffff ),
+	cartoOpacity = isPlanar ? 0 : 0.5,
+	cartoLimit = new Vector2( 0.1, 1e10 ),
+	cartoFadeLimit = isPlanar ? new Vector2( 0, 1e10 ) : new Vector2( 1.5 * 1e4, 1e6 ),
+}
+```

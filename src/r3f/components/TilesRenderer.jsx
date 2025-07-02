@@ -9,6 +9,7 @@ import { WGS84_ELLIPSOID } from '../../three/math/GeoConstants.js';
 
 // context for accessing the tile set
 export const TilesRendererContext = createContext( null );
+export const TilesPluginContext = createContext( null );
 
 // group that matches the transform of the tile set root group
 function TileSetRoot( { children } ) {
@@ -63,7 +64,7 @@ export function EastNorthUpFrame( props ) {
 
 		}
 
-		localEllipsoid.getFrame( lat, lon, az, el, roll, height, group.matrix );
+		localEllipsoid.getOrientedEastNorthUpFrame( lat, lon, height, az, el, roll, group.matrix );
 		group.matrix.decompose( group.position, group.quaternion, group.scale );
 		group.updateMatrixWorld();
 		invalidate();
@@ -142,7 +143,7 @@ export function EastNorthUpFrame( props ) {
 // component for registering a plugin
 export const TilesPlugin = forwardRef( function TilesPlugin( props, ref ) {
 
-	const { plugin, args, ...options } = props;
+	const { plugin, args, children, ...options } = props;
 	const tiles = useContext( TilesRendererContext );
 
 	// create the instance
@@ -195,6 +196,8 @@ export const TilesPlugin = forwardRef( function TilesPlugin( props, ref ) {
 
 	}, [ instance, tiles ] );
 
+	return <TilesPluginContext.Provider value={ instance }>{ children }</TilesPluginContext.Provider>;
+
 } );
 
 // component for adding a TilesRenderer to the scene
@@ -202,12 +205,23 @@ export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 
 	const { url, group = {}, enabled = true, children, ...options } = props;
 	const [ camera, gl, invalidate ] = useThree( state => [ state.camera, state.gl, state.invalidate ] );
+	const [ initialized, setInitialized ] = useState( false );
 
 	const tiles = useMemo( () => {
 
 		return new TilesRendererImpl( url );
 
 	}, [ url ] );
+
+	useEffect( () => {
+
+		// Due to pmndrs/react-three-fiber#3549 it's possible that useFrame will fire before useEffect when
+		// there are many children added to the component resulting in plugins not being registered before
+		// the first call to update (which can be required for auth or root url construction).
+		// So we check here by setting a flag to ensure useEffect has already fired before running useFrame.
+		setInitialized( true );
+
+	}, [] );
 
 	// create the tile set
 	useEffect( () => {
@@ -225,7 +239,7 @@ export const TilesRenderer = forwardRef( function TilesRenderer( props, ref ) {
 	// update the resolution for the camera
 	useFrame( () => {
 
-		if ( tiles === null || ! enabled ) {
+		if ( tiles === null || ! enabled || ! initialized ) {
 
 			return;
 
